@@ -1635,11 +1635,6 @@ void phydm_supportability_init(void *dm_void)
 		if (IS_FUNC_EN(dm->en_adap_soml))
 			support_ability |= ODM_BB_ADAPTIVE_SOML;
 
-		/*@[DYNAMIC_TXPWR and TSSI cannot coexist]*/
-		if (IS_FUNC_EN(&dm->en_tssi_mode) &&
-		    (dm->support_ic_type & ODM_RTL8822C))
-			support_ability &= ~ODM_BB_DYNAMIC_TXPWR;
-
 	}
 	dm->support_ability = support_ability;
 	PHYDM_DBG(dm, ODM_COMP_INIT, "IC=0x%x, mp=%d, Supportability=0x%llx\n",
@@ -1767,7 +1762,8 @@ void phydm_supportability_en(void *dm_void, char input[][16], u32 *_used,
 	u8 i;
 
 	for (i = 0; i < 5; i++) {
-		PHYDM_SSCANF(input[i + 1], DCMD_DECIMAL, &dm_value[i]);
+		if (input[i + 1])
+			PHYDM_SSCANF(input[i + 1], DCMD_DECIMAL, &dm_value[i]);
 	}
 
 	pre_support_ability = dm->support_ability;
@@ -2143,7 +2139,8 @@ void phydm_pause_func_console(void *dm_void, char input[][16], u32 *_used,
 	}
 
 	for (i = 0; i < 10; i++) {
-		PHYDM_SSCANF(input[i + 1], DCMD_HEX, &var1[i]);
+		if (input[i + 1])
+			PHYDM_SSCANF(input[i + 1], DCMD_HEX, &var1[i]);
 	}
 
 	func = (enum phydm_func_idx)var1[0];

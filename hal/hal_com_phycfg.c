@@ -3748,20 +3748,18 @@ void dump_tx_power_index_inline(void *sel, _adapter *adapter, u8 rfpath, enum ch
 	struct hal_spec_t *hal_spec = GET_HAL_SPEC(adapter);
 
 	if (tic->utarget == hal_spec->txgi_max) {
-		RTW_PRINT_SEL(sel, "TXPWR: [%c][%s]cch:%u, %s %uT, idx:%u(0x%02x) = base(%d) + min((byr(%d) + btc(%d) + extra(%d)), lmt(%d), ulmt(%d)) + tpc(%d) + tpt(%d) + dpd(%d)\n"
+		RTW_PRINT_SEL(sel, "TXPWR: [%c][%s]cch:%u, %s %uT, idx:%u(0x%02x) = base(%d) + min((byr(%d) + btc(%d) + extra(%d)), lmt(%d), ulmt(%d)) + tpt(%d) + dpd(%d)\n"
 			, rf_path_char(rfpath), ch_width_str(bw), cch
 			, MGN_RATE_STR(rate), tic->ntx_idx + 1
 			, pwr_idx, pwr_idx, tic->base
 			, tic->by_rate, tic->btc, tic->extra, tic->limit, tic->ulimit
-			, tic->tpc
 			, tic->tpt, tic->dpd);
 	} else {
-		RTW_PRINT_SEL(sel, "TXPWR: [%c][%s]cch:%u, %s %uT, idx:%u(0x%02x) = base(%d) + min(utgt(%d), lmt(%d), ulmt(%d)) + tpc(%d) + tpt(%d) + dpd(%d)\n"
+		RTW_PRINT_SEL(sel, "TXPWR: [%c][%s]cch:%u, %s %uT, idx:%u(0x%02x) = base(%d) + min(utgt(%d), lmt(%d), ulmt(%d)) + tpt(%d) + dpd(%d)\n"
 			, rf_path_char(rfpath), ch_width_str(bw), cch
 			, MGN_RATE_STR(rate), tic->ntx_idx + 1
 			, pwr_idx, pwr_idx, tic->base
 			, tic->utarget, tic->limit, tic->ulimit
-			, tic->tpc
 			, tic->tpt, tic->dpd);
 	}
 }
@@ -3775,19 +3773,17 @@ void dump_tx_power_idx_value(void *sel, _adapter *adapter, u8 rfpath, enum MGN_R
 
 	if (tic->utarget == hal_spec->txgi_max) {
 		RTW_PRINT_SEL(sel, "%4c %9s %uT %s %3u(0x%02x)"
-			"   %4d      ((%4d   %3d   %5d)  %4d  %4d)   %3d   %3d   %3d\n"
+			"   %4d      ((%4d   %3d   %5d)  %4d  %4d)   %3d   %3d\n"
 			, rf_path_char(rfpath), MGN_RATE_STR(rate), tic->ntx_idx + 1
 			, tmp_str, pwr_idx, pwr_idx
 			, tic->base, tic->by_rate, tic->btc, tic->extra, tic->limit, tic->ulimit
-			, tic->tpc
 			, tic->tpt, tic->dpd);
 	} else {
 		RTW_PRINT_SEL(sel, "%4c %9s %uT %s %3u(0x%02x)"
-			"   %4d      (%4d  %4d  %4d)   %3d   %3d   %3d\n"
+			"   %4d      (%4d  %4d  %4d)   %3d   %3d\n"
 			, rf_path_char(rfpath), MGN_RATE_STR(rate), tic->ntx_idx + 1
 			, tmp_str, pwr_idx, pwr_idx
 			, tic->base, tic->utarget, tic->limit, tic->ulimit
-			, tic->tpc
 			, tic->tpt, tic->dpd);
 	}
 }
@@ -3813,17 +3809,15 @@ void dump_tx_power_idx_title(void *sel, _adapter *adapter, enum channel_width bw
 
 	if (!phy_is_txpwr_user_target_specified(adapter)) {
 		RTW_PRINT_SEL(sel, "%-4s %-9s %2s %-6s %-3s%6s"
-			" = %-4s + min((%-4s + %-3s + %-5s), %-4s, %-4s) + %-3s + %-3s + %-3s\n"
+			" = %-4s + min((%-4s + %-3s + %-5s), %-4s, %-4s) + %-3s + %-3s\n"
 			, "path", "rate", "", "dBm", "idx", ""
 			, "base", "byr", "btc", "extra", "lmt", "ulmt"
-			, "tpc"
 			, "tpt", "dpd");
 	} else {
 		RTW_PRINT_SEL(sel, "%-4s %-9s %2s %-6s %-3s%6s"
-			" = %-4s + min(%-4s, %-4s, %-4s) + %-3s + %-3s + %-3s\n"
+			" = %-4s + min(%-4s, %-4s, %-4s) + %-3s + %-3s\n"
 			, "path", "rate", "", "dBm", "idx", ""
 			, "base", "utgt", "lmt", "ulmt"
-			, "tpc"
 			, "tpt", "dpd");
 	}
 }
@@ -3871,7 +3865,7 @@ void dump_tx_power_idx(void *sel, _adapter *adapter, enum channel_width bw, u8 c
 }
 
 void dump_txpwr_total_dbm_value(void *sel, _adapter *adapter, enum MGN_RATE rate, u8 ntx_idx
-	, s16 target, s16 byr, s16 btc, s16 extra, s16 lmt, s16 ulmt, s16 tpc)
+	, s16 target, s16 byr, s16 btc, s16 extra, s16 lmt, s16 ulmt)
 {
 	char target_str[8];
 	char byr_str[8];
@@ -3879,7 +3873,6 @@ void dump_txpwr_total_dbm_value(void *sel, _adapter *adapter, enum MGN_RATE rate
 	char extra_str[8];
 	char lmt_str[8];
 	char ulmt_str[8];
-	char tpc_str[8];
 
 	txpwr_mbm_get_dbm_str(target, 0, target_str, 8);
 	txpwr_mbm_get_dbm_str(byr, 0, byr_str, 8);
@@ -3887,31 +3880,28 @@ void dump_txpwr_total_dbm_value(void *sel, _adapter *adapter, enum MGN_RATE rate
 	txpwr_mbm_get_dbm_str(extra, 0, extra_str, 8);
 	txpwr_mbm_get_dbm_str(lmt, 0, lmt_str, 8);
 	txpwr_mbm_get_dbm_str(ulmt, 0, ulmt_str, 8);
-	txpwr_mbm_get_dbm_str(tpc, 0, tpc_str, 8);
 
-	RTW_PRINT_SEL(sel, "%9s %uT %s =    ((%s   %s   %s), %s, %s)   %s\n"
+	RTW_PRINT_SEL(sel, "%9s %uT %s =    ((%s   %s   %s), %s, %s)\n"
 		, MGN_RATE_STR(rate), ntx_idx + 1
-		, target_str, byr_str, btc_str, extra_str, lmt_str, ulmt_str, tpc_str);
+		, target_str, byr_str, btc_str, extra_str, lmt_str, ulmt_str);
 }
 
 void dump_txpwr_total_dbm_value_utgt(void *sel, _adapter *adapter, enum MGN_RATE rate, u8 ntx_idx
-	, s16 target, s16 utgt, s16 lmt, s16 ulmt, s16 tpc)
+	, s16 target, s16 utgt, s16 lmt, s16 ulmt)
 {
 	char target_str[8];
 	char utgt_str[8];
 	char lmt_str[8];
 	char ulmt_str[8];
-	char tpc_str[8];
 
 	txpwr_mbm_get_dbm_str(target, 0, target_str, 8);
 	txpwr_mbm_get_dbm_str(utgt, 0, utgt_str, 8);
 	txpwr_mbm_get_dbm_str(lmt, 0, lmt_str, 8);
 	txpwr_mbm_get_dbm_str(ulmt, 0, ulmt_str, 8);
-	txpwr_mbm_get_dbm_str(tpc, 0, tpc_str, 8);
 
-	RTW_PRINT_SEL(sel, "%9s %uT %s =    (%s, %s, %s)   %s\n"
+	RTW_PRINT_SEL(sel, "%9s %uT %s =    (%s, %s, %s)\n"
 		, MGN_RATE_STR(rate), ntx_idx + 1
-		, target_str, utgt_str, lmt_str, ulmt_str, tpc_str);
+		, target_str, utgt_str, lmt_str, ulmt_str);
 }
 
 void dump_txpwr_total_dbm_title(void *sel, _adapter *adapter, enum channel_width bw, u8 cch, u8 opch)
@@ -3934,11 +3924,11 @@ void dump_txpwr_total_dbm_title(void *sel, _adapter *adapter, enum channel_width
 	_RTW_PRINT_SEL(sel, ", cch20:%u\n", cch_20);
 
 	if (!phy_is_txpwr_user_target_specified(adapter)) {
-		RTW_PRINT_SEL(sel, "%-9s %2s %-6s = min((%-6s + %-6s + %-6s), %-6s, %-6s) + %-6s\n"
-			, "rate", "", "target", "byr", "btc", "extra", "lmt", "ulmt", "tpc");
+		RTW_PRINT_SEL(sel, "%-9s %2s %-6s = min((%-6s + %-6s + %-6s), %-6s, %-6s)\n"
+			, "rate", "", "target", "byr", "btc", "extra", "lmt", "ulmt");
 	} else {
-		RTW_PRINT_SEL(sel, "%-9s %2s %-6s = min(%-6s, %-6s, %-6s) + %-6s\n"
-			, "rate", "", "target", "utgt", "lmt", "ulmt", "tpc");
+		RTW_PRINT_SEL(sel, "%-9s %2s %-6s = min(%-6s, %-6s, %-6s)\n"
+			, "rate", "", "target", "utgt", "lmt", "ulmt");
 	}
 }
 
@@ -3963,7 +3953,7 @@ void dump_txpwr_total_dbm_by_rs(void *sel, _adapter *adapter, u8 rs, enum channe
 
 	for (i = 0; i < rates_by_sections[rs].rate_num; i++) {
 		struct txpwr_idx_comp tic;
-		s16 target, byr, tpc, btc, extra, utgt, lmt, ulmt;
+		s16 target, byr, btc, extra, utgt, lmt, ulmt;
 		u8 tx_num;
 
 		target = phy_get_txpwr_total_mbm(adapter, rs, rates_by_sections[rs].rates[i], bw, cch, opch, &tic);
@@ -3976,18 +3966,17 @@ void dump_txpwr_total_dbm_by_rs(void *sel, _adapter *adapter, u8 rs, enum channe
 			ulmt = UNSPECIFIED_MBM;
 		else
 			ulmt = ((tic.ulimit * MBM_PDBM) / hal_spec->txgi_pdbm) + mb_of_ntx(tx_num);
-		tpc = (tic.tpc * MBM_PDBM) / hal_spec->txgi_pdbm;
 
 		if (tic.utarget == hal_spec->txgi_max) {
 			byr = ((tic.by_rate * MBM_PDBM) / hal_spec->txgi_pdbm) + mb_of_ntx(tx_num);
 			btc = (tic.btc * MBM_PDBM) / hal_spec->txgi_pdbm;
 			extra = (tic.extra * MBM_PDBM) / hal_spec->txgi_pdbm;
 			dump_txpwr_total_dbm_value(sel, adapter, rates_by_sections[rs].rates[i], tic.ntx_idx
-				, target, byr, btc, extra, lmt, ulmt, tpc);
+				, target, byr, btc, extra, lmt, ulmt);
 		} else {
 			utgt = ((tic.utarget * MBM_PDBM) / hal_spec->txgi_pdbm) + mb_of_ntx(tx_num);
 			dump_txpwr_total_dbm_value_utgt(sel, adapter, rates_by_sections[rs].rates[i], tic.ntx_idx
-				, target, utgt, lmt, ulmt, tpc);
+				, target, utgt, lmt, ulmt);
 		}
 	}
 }
@@ -5723,33 +5712,6 @@ s8 phy_get_txpwr_user_lmt(_adapter *adapter, struct hal_spec_t *hal_spec, u8 ntx
 
 /*
 * Return value in unit of TX Gain Index
-* 0 means unspecified
-*/
-s8 phy_get_txpwr_tpc(_adapter *adapter, struct hal_spec_t *hal_spec)
-{
-	struct rf_ctl_t *rfctl = adapter_to_rfctl(adapter);
-	u16 cnst = 0;
-
-	if (rfctl->tpc_mode == TPC_MODE_MANUAL)
-		cnst = rfctl->tpc_manual_constraint * hal_spec->txgi_pdbm / MBM_PDBM;
-
-	return -cnst;
-}
-
-void dump_txpwr_tpc_settings(void *sel, _adapter *adapter)
-{
-	struct rf_ctl_t *rfctl = adapter_to_rfctl(adapter);
-
-	if (rfctl->tpc_mode == TPC_MODE_DISABLE)
-		RTW_PRINT_SEL(sel, "mode:DISABLE(%d)\n", rfctl->tpc_mode);
-	else if (rfctl->tpc_mode == TPC_MODE_MANUAL) {
-		RTW_PRINT_SEL(sel, "mode:MANUAL(%d)\n", rfctl->tpc_mode);
-		RTW_PRINT_SEL(sel, "constraint:%d (mB)\n", rfctl->tpc_manual_constraint);
-	}
-}
-
-/*
-* Return value in unit of TX Gain Index
 */
 s8 phy_get_txpwr_target(_adapter *adapter, u8 rfpath, RATE_SECTION rs, u8 rate, u8 ntx_idx
 	, enum channel_width bw, BAND_TYPE band, u8 cch, u8 opch, struct txpwr_idx_comp *tic)
@@ -5758,7 +5720,6 @@ s8 phy_get_txpwr_target(_adapter *adapter, u8 rfpath, RATE_SECTION rs, u8 rate, 
 	struct hal_spec_t *hal_spec = GET_HAL_SPEC(adapter);
 	s8 target, by_rate = 0, btc_diff = 0, extra = 0;
 	s8 lmt, utgt, ulmt;
-	s8 tpc = 0;
 
 	lmt = utgt = ulmt = hal_spec->txgi_max;
 
@@ -5791,8 +5752,6 @@ get_lmt:
 	ulmt = phy_get_txpwr_user_lmt(adapter, hal_spec, ntx_idx);
 	/* TODO: limit from outer source, ex: 11d */
 
-	tpc = phy_get_txpwr_tpc(adapter, hal_spec);
-
 exit:
 	if (utgt != hal_spec->txgi_max)
 		target = utgt;
@@ -5804,8 +5763,6 @@ exit:
 	if (target > ulmt)
 		target = ulmt;
 
-	target += tpc;
-
 	if (tic) {
 		tic->target = target;
 		if (utgt == hal_spec->txgi_max) {
@@ -5816,7 +5773,6 @@ exit:
 		tic->utarget = utgt;
 		tic->limit = lmt;
 		tic->ulimit = ulmt;
-		tic->tpc = tpc;
 	}
 
 	return target;

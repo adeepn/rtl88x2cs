@@ -277,14 +277,6 @@ void rtl8822c_set_FwPwrMode_cmd(PADAPTER adapter, u8 psmode)
 void rtl8822c_set_BcnEarly_C2H_Rpt_cmd(PADAPTER padapter, u8 enable)
 {
 	u8	u1H2CSetPwrMode[RTW_HALMAC_H2C_MAX_SIZE] = {0};
-	struct tdls_info *ptdlsinfo = &padapter->tdlsinfo;
-	struct tdls_ch_switch *pchsw_info = &ptdlsinfo->chsw_info;
-
-	if (enable) {
-		pchsw_info->bcn_early_reg_bkp = rtw_read8(padapter, REG_DRVERLYINT);
-		rtw_write8(padapter, REG_DRVERLYINT, 20);
-	} else if (pchsw_info->bcn_early_reg_bkp)
-		rtw_write8(padapter, REG_DRVERLYINT, pchsw_info->bcn_early_reg_bkp);
 
 	SET_PWR_MODE_SET_CMD_ID(u1H2CSetPwrMode, CMD_ID_SET_PWR_MODE);
 	SET_PWR_MODE_SET_CLASS(u1H2CSetPwrMode, CLASS_SET_PWR_MODE);
@@ -528,13 +520,8 @@ static void process_c2h_event(PADAPTER adapter, u8 *c2h, u32 size)
 	pc2h_data = c2h + desc_size;
 	c2h_len = size - desc_size;
 
-	if (c2h_len >= 4) {
-		id = C2H_GET_CMD_ID(pc2h_data);
-		seq = C2H_GET_SEQ(pc2h_data);
-	} else {
-		id = C2H_GET_CMD_ID_1BYTE(pc2h_data);
-		seq = C2H_GET_SEQ_1BYTE(pc2h_data);
-	}
+	id = C2H_GET_CMD_ID(pc2h_data);
+	seq = C2H_GET_SEQ(pc2h_data);
 
 	/* shift 2 byte to remove cmd id & seq */
 	pc2h_payload = pc2h_data + 2;

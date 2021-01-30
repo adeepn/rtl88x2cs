@@ -25,23 +25,6 @@
 #define DRIVER_EARLY_INT_TIME_8822C	0x05
 #define BCN_DMA_ATIME_INT_TIME_8822C	0x02
 
-#ifdef CONFIG_SUPPORT_DYNAMIC_TXPWR
-#define SET_H2CCMD_FW_CRC5_SEARCH_EN(cmd, v)	\
-	SET_BITS_TO_LE_1BYTE((cmd), 0, 1, (v));
-#define SET_H2CCMD_FW_CRC5_SEARCH_MACID(cmd, v)	\
-	SET_BITS_TO_LE_1BYTE((cmd), 1, 7, (v));
-#define SET_H2CCMD_FW_CRC5_SEARCH_MAC(cmd, mac)	\
-	do {		\
-		int __offset = 0;	\
-		for (__offset = 0; __offset < ETH_ALEN; __offset++)	\
-			SET_BITS_TO_LE_1BYTE((u8 *)(cmd + __offset), 0, 8, *((u8 *)(mac + __offset)));	\
-	} while(0)
-#endif
-
-#define C2H_GET_CMD_ID_1BYTE(c2h_pkt) LE_BITS_TO_1BYTE(c2h_pkt + 0X00, 0, 8)
-
-#define C2H_GET_SEQ_1BYTE(c2h_pkt) LE_BITS_TO_1BYTE(c2h_pkt + 0X01, 0, 8)
-
 /* rtl8822c_ops.c */
 struct hw_port_reg {
 	u32 net_type;	/*reg_offset*/
@@ -160,9 +143,5 @@ void rtl8822c_phy_bf_leave(PADAPTER, u8 *addr);
 void rtl8822c_phy_bf_set_gid_table(PADAPTER, struct beamformer_entry*);
 void rtl8822c_phy_bf_sounding_status(PADAPTER, u8 status);
 #endif /* CONFIG_BEAMFORMING */
-
-#ifdef CONFIG_SUPPORT_DYNAMIC_TXPWR
-void rtl8822c_dtp_macid_set(_adapter *padapter, u8 opmode, u8 mac_id, u8 *paddr);
-#endif
 
 #endif /* _RTL8822C_H_ */

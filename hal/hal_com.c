@@ -13220,8 +13220,7 @@ void rtw_hal_check_rxfifo_full(_adapter *adapter)
 		    IS_8192E(pHalData->version_id) ||
 		    IS_8703B_SERIES(pHalData->version_id) ||
 		    IS_8723D_SERIES(pHalData->version_id) ||
-		    IS_8192F_SERIES(pHalData->version_id) ||
-		    IS_8822C_SERIES(pHalData->version_id)) {
+		    IS_8192F_SERIES(pHalData->version_id)) {
 			rtw_write8(adapter, REG_RXERR_RPT + 3, rtw_read8(adapter, REG_RXERR_RPT + 3) | 0xa0);
 			save_cnt = _TRUE;
 		} else {
@@ -13679,9 +13678,6 @@ u32 Hal_readPGDataFromConfigFile(PADAPTER padapter)
 	HAL_DATA_TYPE *hal_data = GET_HAL_DATA(padapter);
 	u32 ret = _FALSE;
 	u32 maplen = 0;
-#ifdef CONFIG_MP_INCLUDED
-	struct mp_priv *pmp_priv = &padapter->mppriv;
-#endif
 
 	EFUSE_GetEfuseDefinition(padapter, EFUSE_WIFI, TYPE_EFUSE_MAP_LEN , (void *)&maplen, _FALSE);
 
@@ -13689,16 +13685,8 @@ u32 Hal_readPGDataFromConfigFile(PADAPTER padapter)
 		RTW_ERR("eFuse length error :%d\n", maplen);
 		return _FALSE;
 	}	
-#ifdef CONFIG_MP_INCLUDED
-	if (pmp_priv->efuse_update_file == _TRUE && (rtw_mp_mode_check(padapter))) {
-		RTW_INFO("%s, eFuse read from file :%s\n", __func__, pmp_priv->efuse_file_path);
-		ret = rtw_read_efuse_from_file(pmp_priv->efuse_file_path, hal_data->efuse_eeprom_data, maplen);
-		pmp_priv->efuse_update_file = _FALSE;
-	} else
-#endif
-	{
-		ret = rtw_read_efuse_from_file(EFUSE_MAP_PATH, hal_data->efuse_eeprom_data, maplen);
-	}
+
+	ret = rtw_read_efuse_from_file(EFUSE_MAP_PATH, hal_data->efuse_eeprom_data, maplen);
 
 	hal_data->efuse_file_status = ((ret == _FAIL) ? EFUSE_FILE_FAILED : EFUSE_FILE_LOADED);
 
@@ -14883,7 +14871,6 @@ void dump_hal_spec(void *sel, _adapter *adapter)
 	int i;
 
 	RTW_PRINT_SEL(sel, "macid_num:%u\n", hal_spec->macid_num);
-	RTW_PRINT_SEL(sel, "macid_cap:%u\n", hal_spec->macid_cap);
 	RTW_PRINT_SEL(sel, "sec_cap:0x%02x\n", hal_spec->sec_cap);
 	RTW_PRINT_SEL(sel, "sec_cam_ent_num:%u\n", hal_spec->sec_cam_ent_num);
 
@@ -15426,7 +15413,6 @@ void rtw_hal_switch_chnl_and_set_bw_offload(_adapter *adapter, u8 central_ch, u8
 	SET_H2CCMD_SINGLE_CH_SWITCH_V2_CENTRAL_CH_NUM(h2c, central_ch);
 	SET_H2CCMD_SINGLE_CH_SWITCH_V2_PRIMARY_CH_IDX(h2c, pri_ch_idx);
 	SET_H2CCMD_SINGLE_CH_SWITCH_V2_BW(h2c, bw);
-	SET_H2CCMD_SINGLE_CH_SWITCH_V2_IQK_UPDATE_EN(h2c, 1);
 
 	rtw_sctx_init(chsw_sctx, 10);
 	rtw_hal_fill_h2c_cmd(adapter, H2C_SINGLE_CHANNELSWITCH_V2, H2C_SINGLE_CHANNELSWITCH_V2_LEN, h2c);

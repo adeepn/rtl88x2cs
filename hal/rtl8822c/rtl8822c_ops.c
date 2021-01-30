@@ -784,10 +784,7 @@ u8 rtl8822c_read_efuse(PADAPTER adapter)
 	u16 f_efuse_xcap_110_111 = 0xFFFF;
 #endif
 	u8 ret = _FAIL;
-	u8 bforcelodefile = _FALSE;
-#ifdef CONFIG_MP_INCLUDED
-	struct mp_priv *pmp_priv = &adapter->mppriv;
-#endif
+
 	hal = GET_HAL_DATA(adapter);
 	efuse_map = hal->efuse_eeprom_data;
 
@@ -813,11 +810,7 @@ u8 rtl8822c_read_efuse(PADAPTER adapter)
 
 	/* 3. Read Efuse file if necessary */
 #ifdef CONFIG_EFUSE_CONFIG_FILE
-#ifdef CONFIG_MP_INCLUDED
-	if (pmp_priv->efuse_update_file == _TRUE && (rtw_mp_mode_check(adapter)))
-		bforcelodefile = _TRUE;
-#endif
-	if (check_phy_efuse_tx_power_info_valid(adapter) == _FALSE || bforcelodefile == _TRUE) {
+	if (check_phy_efuse_tx_power_info_valid(adapter) == _FALSE) {
 		if (Hal_readPGDataFromConfigFile(adapter) != _SUCCESS)
 			RTW_WARN("%s: invalid phy efuse and read from file fail, will use driver default!!\n", __FUNCTION__);
 #ifdef CONFIG_RTL8822C_XCAP_NEW_POLICY
@@ -1062,12 +1055,14 @@ static void xmit_status_check(PADAPTER p)
 			else {
 				diff_time = rtw_get_passing_time_ms(psrtpriv->last_tx_complete_time);
 				if (diff_time > 4000) {
+					u32 ability = 0;
 
+					ability = rtw_phydm_ability_get(p);
 
 					RTW_INFO("%s tx hang %s\n", __FUNCTION__,
-						(rtw_odm_adaptivity_needed(p)) ? "ODM_BB_ADAPTIVITY" : "");
+						(ability & ODM_BB_ADAPTIVITY) ? "ODM_BB_ADAPTIVITY" : "");
 
-					if (!rtw_odm_adaptivity_needed(p)) {
+					if (!(ability & ODM_BB_ADAPTIVITY)) {
 						psrtpriv->self_dect_tx_cnt++;
 						psrtpriv->self_dect_case = 1;
 						rtw_hal_sreset_reset(p);
@@ -1197,7 +1192,7 @@ static void set_opmode_monitor(PADAPTER adapter)
 	rtw_write16(adapter, REG_RXFLTMAP2_8822C, 0xFFFF);
 #endif /* CONFIG_WIFI_MONITOR */
 }
-#ifndef CONFIG_MI_WITH_MBSSID_CAM
+
 static void set_opmode_port0(PADAPTER adapter, u8 mode)
 {
 	u8 is_tx_bcn;
@@ -1279,7 +1274,7 @@ static void set_opmode_port0(PADAPTER adapter, u8 mode)
 
 		/* Enable HW seq for BCN
 			0x4FC[0]: EN_HWSEQ
-			0x4FC[1]: EN_HWSEQEXT
+=			0x4FC[1]: EN_HWSEQEXT
 			According TX desc
 		*/
 		rtw_write8(adapter, REG_DUMMY_PAGE4_V1_8822C, 0x01);
@@ -1360,7 +1355,6 @@ static void set_opmode_port1(PADAPTER adapter, u8 mode)
 	}
 #endif /* CONFIG_CONCURRENT_MODE */
 }
-#endif /* !CONFIG_MI_WITH_MBSSID_CAM */
 void hw_tsf_reset(_adapter *adapter)
 {
 	u8 hw_port = rtw_hal_get_port(adapter);
@@ -3667,11 +3661,6 @@ static void fill_default_txdesc(struct xmit_frame *pxmitframe, u8 *pbuf)
 #endif/*CONFIG_IP_R_MONITOR*/
 				SET_TX_DESC_DATARATE_8822C(pbuf, MRateToHwRate(pmlmeext->tx_rate));
 
-#ifdef CONFIG_RTW_MGMT_TX_EAPOL
-			if (pattrib->ether_type == 0x888e)
-				SET_TX_DESC_QSEL_8822C(pbuf, QSLT_MGNT);
-#endif
-
 			RTW_INFO(FUNC_ADPT_FMT ": SP Packet(0x%04X) rate=0x%x SeqNum = %d\n",
 				FUNC_ADPT_ARG(adapter), pattrib->ether_type, MRateToHwRate(pmlmeext->tx_rate), pattrib->seqnum);			
 		}
@@ -4172,9 +4161,5 @@ void rtl8822c_set_hal_ops(PADAPTER adapter)
 	ops->init_mac_register = rtl8822c_phy_init_mac_register;
 	ops->init_phy = rtl8822c_phy_init;
 	ops->reqtxrpt = rtl8822c_req_txrpt_cmd;
-
-#ifdef CONFIG_SUPPORT_DYNAMIC_TXPWR
-	ops->dtp_macid_set = rtl8822c_dtp_macid_set;
-#endif
 }
 

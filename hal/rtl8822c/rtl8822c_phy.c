@@ -444,6 +444,8 @@ static void init_phydm_cominfo(PADAPTER adapter)
 	PHAL_DATA_TYPE hal;
 	struct dm_struct *p_dm_odm;
 	u32 support_ability = 0;
+	u8 cut_ver = ODM_CUT_A, fab_ver = ODM_TSMC;
+
 
 	hal = GET_HAL_DATA(adapter);
 	p_dm_odm = &hal->odmpriv;
@@ -453,9 +455,41 @@ static void init_phydm_cominfo(PADAPTER adapter)
 	odm_cmn_info_init(p_dm_odm, ODM_CMNINFO_PACKAGE_TYPE, hal->PackageType);
 	odm_cmn_info_init(p_dm_odm, ODM_CMNINFO_IC_TYPE, ODM_RTL8822C);
 
-	RTW_INFO("%s: Fv=%d Cv=%d\n", __FUNCTION__, hal->version_id.VendorType, hal->version_id.CUTVersion);
-	odm_cmn_info_init(p_dm_odm, ODM_CMNINFO_FAB_VER, hal->version_id.VendorType);
-	odm_cmn_info_init(p_dm_odm, ODM_CMNINFO_CUT_VER, hal->version_id.CUTVersion);
+	if (IS_CHIP_VENDOR_TSMC(hal->version_id))
+		fab_ver = ODM_TSMC;
+	else if (IS_CHIP_VENDOR_UMC(hal->version_id))
+		fab_ver = ODM_UMC;
+	else if (IS_CHIP_VENDOR_SMIC(hal->version_id))
+		fab_ver = ODM_UMC + 1;
+	else
+		RTW_INFO("%s: unknown Fv=%d !!\n",
+			 __FUNCTION__, GET_CVID_MANUFACTUER(hal->version_id));
+
+	if (IS_A_CUT(hal->version_id))
+		cut_ver = ODM_CUT_A;
+	else if (IS_B_CUT(hal->version_id))
+		cut_ver = ODM_CUT_B;
+	else if (IS_C_CUT(hal->version_id))
+		cut_ver = ODM_CUT_C;
+	else if (IS_D_CUT(hal->version_id))
+		cut_ver = ODM_CUT_D;
+	else if (IS_E_CUT(hal->version_id))
+		cut_ver = ODM_CUT_E;
+	else if (IS_F_CUT(hal->version_id))
+		cut_ver = ODM_CUT_F;
+	else if (IS_I_CUT(hal->version_id))
+		cut_ver = ODM_CUT_I;
+	else if (IS_J_CUT(hal->version_id))
+		cut_ver = ODM_CUT_J;
+	else if (IS_K_CUT(hal->version_id))
+		cut_ver = ODM_CUT_K;
+	else
+		RTW_INFO("%s: unknown Cv=%d !!\n",
+			 __FUNCTION__, GET_CVID_CUT_VERSION(hal->version_id));
+
+	RTW_INFO("%s: Fv=%d Cv=%d\n", __FUNCTION__, fab_ver, cut_ver);
+	odm_cmn_info_init(p_dm_odm, ODM_CMNINFO_FAB_VER, fab_ver);
+	odm_cmn_info_init(p_dm_odm, ODM_CMNINFO_CUT_VER, cut_ver);
 	odm_cmn_info_init(p_dm_odm, ODM_CMNINFO_DIS_DPD
 		, hal->txpwr_pg_mode == TXPWR_PG_WITH_PWR_IDX ? _TRUE : _FALSE);
 	odm_cmn_info_init(p_dm_odm, ODM_CMNINFO_TSSI_ENABLE
@@ -888,13 +922,6 @@ static void mac_switch_bandwidth(PADAPTER adapter, u8 pri_ch_idx)
 
 	channel = hal->current_channel;
 	bw = hal->current_channel_bw;
-#ifdef CONFIG_NARROWBAND_SUPPORTING
-	if (adapter->registrypriv.rtw_nb_config == RTW_NB_CONFIG_WIDTH_10)
-		err = rtw_halmac_set_bandwidth(adapter_to_dvobj(adapter), channel, pri_ch_idx, HALMAC_BW_10);
-	else if (adapter->registrypriv.rtw_nb_config == RTW_NB_CONFIG_WIDTH_5)
-		err = rtw_halmac_set_bandwidth(adapter_to_dvobj(adapter), channel, pri_ch_idx, HALMAC_BW_5);
-	else
-#endif
 	err = rtw_halmac_set_bandwidth(adapter_to_dvobj(adapter), channel, pri_ch_idx, bw);
 	if (err) {
 		RTW_INFO(FUNC_ADPT_FMT ": (channel=%d, pri_ch_idx=%d, bw=%d) fail\n",

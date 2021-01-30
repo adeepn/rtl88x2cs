@@ -237,7 +237,6 @@ s32 init_mp_priv(PADAPTER padapter)
 	pmppriv->pktInterval = 0;
 	pmppriv->pktLength = 1000;
 	pmppriv->bprocess_mp_mode = _FALSE;
-	pmppriv->efuse_update_file= _FALSE;
 
 	mp_init_xmit_attrib(&pmppriv->tx, padapter);
 

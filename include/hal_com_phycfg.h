@@ -186,8 +186,6 @@ s8 phy_get_txpwr_lmt_sub_chs(_adapter *adapter
 #define phy_get_txpwr_lmt_sub_chs(adapter, regd_name, band, bw, rfpath, rate, ntx_idx, cch, opch) (GET_HAL_SPEC(adapter)->txgi_max)
 #endif /* CONFIG_TXPWR_LIMIT */
 
-void dump_txpwr_tpc_settings(void *sel, _adapter *adapter);
-
 s8 phy_get_txpwr_target(_adapter *adapter, u8 rfpath, RATE_SECTION rs, u8 rate, u8 ntx_idx
 	, enum channel_width bw, BAND_TYPE band, u8 cch, u8 opch, struct txpwr_idx_comp *tic);
 s8 phy_get_txpwr_amends(_adapter *adapter, u8 rfpath, RATE_SECTION rs, u8 rate, u8 ntx_idx
@@ -233,7 +231,6 @@ struct txpwr_idx_comp {
 	s8 utarget;
 	s8 limit;
 	s8 ulimit;
-	s8 tpc;
 
 	/* for amends */
 	s8 tpt;

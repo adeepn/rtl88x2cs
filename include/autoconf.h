@@ -146,8 +146,6 @@
 #define RTW_XMIT_THREAD_HIGH_PRIORITY_AGG
 #define CONFIG_SDIO_HOOK_DEV_SHUTDOWN
 /*#define CONFIG_SDIO_TX_ENABLE_AVAL_INT*/ /* not implemented yet */
-#define SDIO_FREE_XMIT_BUF_SEMA
-/* #define DBG_SDIO_FREE_XMIT_BUF_SEMA */
 /* #define CONFIG_SDIO_TX_FORMAT_DUMMY_AUTO */
 #define CONFIG_SDIO_RX_COPY
 #define DBG_SDIO	1
@@ -261,7 +259,6 @@
 #define CONFIG_HW_ANTENNA_DIVERSITY
 #endif /* CONFIG_ANTENNA_DIVERSITY */
 
-/* #define CONFIG_RTW_MGMT_TX_EAPOL */
 
 /*
  * Debug Related Config

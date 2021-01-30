@@ -3325,8 +3325,10 @@ void phydm_set_txagc_dbg(void *dm_void, char input[][16], u32 *_used,
 	u8 i = 0, input_idx = 0;
 
 	for (i = 0; i < 5; i++) {
-		PHYDM_SSCANF(input[i + 1], DCMD_HEX, &var1[i]);
-		input_idx++;
+		if (input[i + 1]) {
+			PHYDM_SSCANF(input[i + 1], DCMD_HEX, &var1[i]);
+			input_idx++;
+		}
 	}
 
 	if ((strcmp(input[1], help) == 0)) {
@@ -3434,7 +3436,8 @@ void phydm_debug_trace(void *dm_void, char input[][16], u32 *_used,
 	u8 i = 0;
 
 	for (i = 0; i < 5; i++) {
-		PHYDM_SSCANF(input[i + 1], DCMD_DECIMAL, &val[i]);
+		if (input[i + 1])
+			PHYDM_SSCANF(input[i + 1], DCMD_DECIMAL, &val[i]);
 	}
 	comp = dm->debug_components;
 	pre_debug_components = dm->debug_components;
@@ -3583,8 +3586,10 @@ void phydm_fw_debug_trace(void *dm_void, char input[][16], u32 *_used,
 	u32 comp = 0;
 
 	for (i = 0; i < 5; i++) {
-		PHYDM_SSCANF(input[i + 1], DCMD_DECIMAL, &val[i]);
-		input_idx++;
+		if (input[i + 1]) {
+			PHYDM_SSCANF(input[i + 1], DCMD_DECIMAL, &val[i]);
+			input_idx++;
+		}
 	}
 
 	if (input_idx == 0)
@@ -3969,7 +3974,8 @@ void phydm_dump_reg(void *dm_void, char input[][16], u32 *_used, char *output,
 	u32 out_len = *_out_len;
 	u32 addr = 0;
 
-	PHYDM_SSCANF(input[1], DCMD_DECIMAL, &var1[0]);
+	if (input[1])
+		PHYDM_SSCANF(input[1], DCMD_DECIMAL, &var1[0]);
 
 	if ((strcmp(input[1], help) == 0)) {
 		#ifdef PHYDM_IC_JGR3_SERIES_SUPPORT
@@ -4057,8 +4063,10 @@ void phydm_show_rx_rate(void *dm_void, char input[][16], u32 *_used,
 	u8 i, input_idx = 0;
 
 	for (i = 0; i < 5; i++) {
-		PHYDM_SSCANF(input[i + 1], DCMD_HEX, &var1[i]);
-		input_idx++;
+		if (input[i + 1]) {
+			PHYDM_SSCANF(input[i + 1], DCMD_HEX, &var1[i]);
+			input_idx++;
+		}
 	}
 
 	if (input_idx == 0)
@@ -4148,7 +4156,8 @@ void phydm_per_tone_evm(void *dm_void, char input[][16], u32 *_used,
 	}
 
 	for (i = 0; i < 4; i++) {
-		PHYDM_SSCANF(input[i + 1], DCMD_DECIMAL, &var1[i]);
+		if (input[i + 1])
+			PHYDM_SSCANF(input[i + 1], DCMD_DECIMAL, &var1[i]);
 	}
 
 	avg_num = var1[0];
@@ -4369,7 +4378,8 @@ void phydm_bw_ch_adjust(void *dm_void, char input[][16],
 	}
 
 	for (i = 0; i < 4; i++) {
-		PHYDM_SSCANF(input[i + 1], DCMD_DECIMAL, &var1[i]);
+		if (input[i + 1])
+			PHYDM_SSCANF(input[i + 1], DCMD_DECIMAL, &var1[i]);
 	}
 
 	is_enable_dbg_mode = (boolean)var1[0];
@@ -4400,8 +4410,10 @@ void phydm_ext_rf_element_ctrl(void *dm_void, char input[][16], u32 *_used,
 	u8 i = 0, input_idx = 0;
 
 	for (i = 0; i < 5; i++) {
-		PHYDM_SSCANF(input[i + 1], DCMD_DECIMAL, &val[i]);
-		input_idx++;
+		if (input[i + 1]) {
+			PHYDM_SSCANF(input[i + 1], DCMD_DECIMAL, &val[i]);
+			input_idx++;
+		}
 	}
 
 	if (input_idx == 0)
@@ -4824,7 +4836,8 @@ void phydm_reg_monitor(void *dm_void, char input[][16], u32 *_used,
 	u8 i = 0;
 
 	for (i = 0; i < 7; i++) {
-		PHYDM_SSCANF(input[i + 1], DCMD_DECIMAL, &var1[i]);
+		if (input[i + 1])
+			PHYDM_SSCANF(input[i + 1], DCMD_DECIMAL, &var1[i]);
 	}
 
 	if ((strcmp(input[1], help) == 0)) {
@@ -4898,7 +4911,8 @@ void phydm_get_rxagc_table_dbg(void *dm_void, char input[][16], u32 *_used,
 			 "get rxagc table : {0:ori, 1:modified} {table:0~15} {mp_gain_idx:0~63, all:0xff}\n");
 	} else {
 		for (i = 0; i < 3; i++) {
-			PHYDM_SSCANF(input[i + 1], DCMD_HEX, &var1[i]);
+			if (input[i + 1])
+				PHYDM_SSCANF(input[i + 1], DCMD_HEX, &var1[i]);
 		}
 
 		is_modified = (boolean)var1[0];
@@ -4954,8 +4968,9 @@ void phydm_shift_rxagc_table_dbg(void *dm_void, char input[][16], u32 *_used,
 			 "shift rxagc table : {0:-, 1:+} {value(0~63, unit:2dB)}\n");
 	} else {
 		for (i = 0; i < 3; i++) {
-			PHYDM_SSCANF(input[i + 1], DCMD_DECIMAL,
-				     &var1[i]);
+			if (input[i + 1])
+				PHYDM_SSCANF(input[i + 1], DCMD_DECIMAL,
+					     &var1[i]);
 		}
 
 		if ((u8)var1[1] > 63) {
@@ -5435,7 +5450,8 @@ void phydm_cmd_parser(struct dm_struct *dm, char input[][MAX_ARGV],
 		break;
 
 	case PHYDM_DIS_HTSTF_CONTROL: {
-		PHYDM_SSCANF(input[1], DCMD_DECIMAL, &var1[0]);
+		if (input[1])
+			PHYDM_SSCANF(input[1], DCMD_DECIMAL, &var1[0]);
 
 		if (var1[0] == 1) {
 			/* setting being false is for debug */

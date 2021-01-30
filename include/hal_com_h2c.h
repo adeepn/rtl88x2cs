@@ -114,9 +114,6 @@ enum h2c_cmd {
 #ifdef CONFIG_FW_HANDLE_TXBCN
 	H2C_FW_BCN_OFFLOAD = 0xBA,
 #endif
-#ifdef CONFIG_SUPPORT_DYNAMIC_TXPWR
-	H2C_FW_CRC5_SEARCH = 0xBB,
-#endif
 	H2C_RESET_TSF = 0xC0,
 #ifdef CONFIG_FW_CORRECT_BCN
 	H2C_BCNHWSEQ = 0xC5,
@@ -194,12 +191,8 @@ enum h2c_cmd {
 	#define H2C_FW_DBG_MSG_PKT_LEN	2
 #endif /*DBG_FW_DEBUG_MSG_PKT*/
 
-#define H2C_SINGLE_CHANNELSWITCH_V2_LEN 3
+#define H2C_SINGLE_CHANNELSWITCH_V2_LEN 2
 #define H2C_BT_UNKNOWN_DEVICE_WA_LEN 1
-
-#ifdef CONFIG_SUPPORT_DYNAMIC_TXPWR
-#define H2C_FW_CRC5_SEARCH_LEN	7
-#endif
 
 #define eq_mac_addr(a, b)						(((a)[0] == (b)[0] && (a)[1] == (b)[1] && (a)[2] == (b)[2] && (a)[3] == (b)[3] && (a)[4] == (b)[4] && (a)[5] == (b)[5]) ? 1 : 0)
 #define cp_mac_addr(des, src)					((des)[0] = (src)[0], (des)[1] = (src)[1], (des)[2] = (src)[2], (des)[3] = (src)[3], (des)[4] = (src)[4], (des)[5] = (src)[5])
@@ -484,9 +477,7 @@ s32 rtw_hal_customer_str_write(_adapter *adapter, const u8 *cs);
 #define SET_H2CCMD_SINGLE_CH_SWITCH_V2_CENTRAL_CH_NUM(__pH2CCmd, __Value)	SET_BITS_TO_LE_1BYTE(__pH2CCmd, 0, 8, __Value)
 #define SET_H2CCMD_SINGLE_CH_SWITCH_V2_PRIMARY_CH_IDX(__pH2CCmd, __Value)	SET_BITS_TO_LE_1BYTE((__pH2CCmd) + 1, 0, 4, __Value)
 #define SET_H2CCMD_SINGLE_CH_SWITCH_V2_BW(__pH2CCmd, __Value)	SET_BITS_TO_LE_1BYTE((__pH2CCmd) + 1, 4, 4, __Value)
-#define SET_H2CCMD_SINGLE_CH_SWITCH_V2_PWR_IDX_UPDATE_EN(__pH2CCmd, __Value)	SET_BITS_TO_LE_1BYTE((__pH2CCmd) + 2, 0, 1, __Value)
-#define SET_H2CCMD_SINGLE_CH_SWITCH_V2_IQK_UPDATE_EN(__pH2CCmd, __Value)	SET_BITS_TO_LE_1BYTE((__pH2CCmd) + 2, 1, 1, __Value)
-#define SET_H2CCMD_SINGLE_CH_SWITCH_V2_CH_IDX(__pH2CCmd, __Value)	SET_BITS_TO_LE_1BYTE((__pH2CCmd) + 2, 4, 4, __Value)
+
 
 #if defined(CONFIG_BT_COEXIST) && defined(CONFIG_FW_MULTI_PORT_SUPPORT)
 #define SET_H2CCMD_BTC_WL_PORT_ID(__pH2CCmd, __Value) SET_BITS_TO_LE_1BYTE(__pH2CCmd, 0, 4, __Value)

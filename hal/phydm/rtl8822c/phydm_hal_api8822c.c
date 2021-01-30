@@ -1421,119 +1421,6 @@ phydm_tx_dfir_setting_8822c(struct dm_struct *dm, u8 central_ch)
 }
 
 __odm_func__
-void phydm_set_manual_nbi_8822c(struct dm_struct *dm, boolean en_manual_nbi,
-				int tone_idx)
-{
-	if (en_manual_nbi) {
-		/*set tone_idx*/
-		odm_set_bb_reg(dm, R_0x1944, 0x001ff000, tone_idx);
-		odm_set_bb_reg(dm, R_0x4044, 0x001ff000, tone_idx);
-		/*enable manual NBI path_en*/
-		odm_set_bb_reg(dm, R_0x1940, BIT(31), 0x1);
-		odm_set_bb_reg(dm, R_0x4040, BIT(31), 0x1);
-		/*enable manual NBI*/
-		odm_set_bb_reg(dm, R_0x818, BIT(11), 0x1);
-		/*enable NBI block*/
-		odm_set_bb_reg(dm, R_0x1d3c, 0x78000000, 0xf);
-	} else {
-		/*reset tone_idx*/
-		odm_set_bb_reg(dm, R_0x1944, 0x001ff000, 0x0);
-		odm_set_bb_reg(dm, R_0x4044, 0x001ff000, 0x0);
-		/*disable manual NBI path_en*/
-		odm_set_bb_reg(dm, R_0x1940, BIT(31), 0x0);
-		odm_set_bb_reg(dm, R_0x4040, BIT(31), 0x0);
-		/*disable manual NBI*/
-		odm_set_bb_reg(dm, R_0x818, BIT(11), 0x0);
-		/*disable NBI block*/
-		odm_set_bb_reg(dm, R_0x1d3c, 0x78000000, 0x0);
-	}
-}
-
-__odm_func__
-void phydm_set_auto_nbi_8822c(struct dm_struct *dm, boolean en_auto_nbi)
-{
-	if (en_auto_nbi) {
-		/*enable auto nbi detection*/
-		odm_set_bb_reg(dm, R_0x818, BIT(3), 0x1);
-		odm_set_bb_reg(dm, R_0x1d3c, 0x78000000, 0xf);
-	} else {
-		odm_set_bb_reg(dm, R_0x818, BIT(3), 0x0);
-		odm_set_bb_reg(dm, R_0x1d3c, 0x78000000, 0x0);
-	}
-}
-
-__odm_func__
-void phydm_csi_mask_enable_8822c(struct dm_struct *dm, boolean enable)
-{
-	if (enable)
-		odm_set_bb_reg(dm, R_0xc0c, BIT(3), 0x1);
-	else
-		odm_set_bb_reg(dm, R_0xc0c, BIT(3), 0x0);
-}
-
-__odm_func__
-void phydm_set_csi_mask_8822c(struct dm_struct *dm, u32 tone_idx)
-{
-	u32 table_addr = tone_idx >> 1;
-
-	/*enable clk*/
-	odm_set_bb_reg(dm, R_0x1ee8, 0x3, 0x3);
-	/*enable write table*/
-	odm_set_bb_reg(dm, R_0x1d94, BIT(31) | BIT(30), 0x1);
-	/*set table_addr*/
-	odm_set_bb_reg(dm, R_0x1d94, MASKBYTE2, (table_addr & 0xff));
-
-	if (tone_idx & 0x1)
-		odm_set_bb_reg(dm, R_0x1d94, 0xf0, 0x8);
-	else
-		odm_set_bb_reg(dm, R_0x1d94, 0xf, 0x8);
-
-	/*disable clk*/
-	odm_set_bb_reg(dm, R_0x1ee8, 0x3, 0x0);
-}
-
-__odm_func__
-void phydm_clean_all_csi_mask_8822c(struct dm_struct *dm)
-{
-	u8 i = 0;
-
-	/*enable clk*/
-	odm_set_bb_reg(dm, R_0x1ee8, 0x3, 0x3);
-	/*enable write table*/
-	odm_set_bb_reg(dm, R_0x1d94, BIT(31) | BIT(30), 0x1);
-
-	for (i = 0; i < 128; i++) {
-		odm_set_bb_reg(dm, R_0x1d94, MASKBYTE2, i);
-		odm_set_bb_reg(dm, R_0x1d94, MASKBYTE0, 0x0);
-	}
-
-	/*disable clk*/
-	odm_set_bb_reg(dm, R_0x1ee8, 0x3, 0x0);
-}
-
-__odm_func__
-void phydm_spur_eliminate_8822c(struct dm_struct *dm, u8 central_ch)
-{
-	phydm_set_auto_nbi_8822c(dm, false);
-	phydm_csi_mask_enable_8822c(dm, true);
-
-	if (central_ch == 153 && (*dm->band_width == CHANNEL_WIDTH_20)) {
-		phydm_set_manual_nbi_8822c(dm, true, 112); /*5760 MHz*/
-		phydm_set_csi_mask_8822c(dm, 112);
-	} else if (central_ch == 151 && (*dm->band_width == CHANNEL_WIDTH_40)) {
-		phydm_set_manual_nbi_8822c(dm, true, 16); /*5760 MHz*/
-		phydm_set_csi_mask_8822c(dm, 16);
-	} else if (central_ch == 155 && (*dm->band_width == CHANNEL_WIDTH_80)) {
-		phydm_set_manual_nbi_8822c(dm, true, 208); /*5760 MHz*/
-		phydm_set_csi_mask_8822c(dm, 208);
-	} else {
-		phydm_set_manual_nbi_8822c(dm, false, 0);
-		phydm_clean_all_csi_mask_8822c(dm);
-		phydm_csi_mask_enable_8822c(dm, false);
-	}
-}
-
-__odm_func__
 void phydm_set_dis_dpd_by_rate_8822c(struct dm_struct *dm, u16 bitmask)
 {
 	/* bit(0) : ofdm 6m*/
@@ -1701,12 +1588,9 @@ config_phydm_switch_channel_8822c(struct dm_struct *dm, u8 central_ch)
 			phydm_set_dis_dpd_by_rate_8822c(dm, 0x0);
 	}
 	/*====================================================================*/
-	if (*dm->mp_mode)
-		phydm_spur_eliminate_8822c(dm, central_ch);
-
-	phydm_bb_reset_8822c(dm);
 
 	phydm_igi_toggle_8822c(dm);
+	phydm_bb_reset_8822c(dm);
 
 	PHYDM_DBG(dm, ODM_PHY_CONFIG, "Switch CH:%d success\n", central_ch);
 	return true;

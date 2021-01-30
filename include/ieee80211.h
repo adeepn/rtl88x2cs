@@ -26,7 +26,7 @@
 
 #ifdef CONFIG_AP_MODE
 
-#define RTL_IOCTL_HOSTAPD (SIOCDEVPRIVATE + 2)
+#define RTL_IOCTL_HOSTAPD (SIOCIWFIRSTPRIV + 28)
 
 /* RTL871X_IOCTL_HOSTAPD ioctl() cmd: */
 enum {
@@ -499,21 +499,12 @@ struct rtw_ieee80211s_hdr {
 } __attribute__((packed));
 #endif
 
-/* Some IEEE 802.11x packet types are corresponding to parsing_eapol_packet() */
 enum eap_type {
 	EAP_PACKET = 0,
-	NON_EAPOL,
 	EAPOL_START,
 	EAPOL_LOGOFF,
 	EAPOL_KEY,
-	EAPOL_ENCAP_ASF_ALERT,
-	EAPOL_PACKET,
-	EAPOL_WPA_GROUP_KEY_1_2,
-	EAPOL_WPA_GROUP_KEY_2_2,
-	EAPOL_1_4,
-	EAPOL_2_4,
-	EAPOL_3_4,
-	EAPOL_4_4,
+	EAPOL_ENCAP_ASF_ALERT
 };
 
 #define IEEE80211_3ADDR_LEN 24
@@ -1667,6 +1658,26 @@ enum rtw_ieee80211_vht_actioncode {
 	RTW_WLAN_ACTION_VHT_GROUPID_MANAGEMENT = 1,
 	RTW_WLAN_ACTION_VHT_OPMODE_NOTIFICATION = 2,
 };
+
+/*IEEE 802.11r action code*/
+#ifdef CONFIG_RTW_80211R
+enum rtw_ieee80211_ft_actioncode {
+	RTW_WLAN_ACTION_FT_RESV,
+	RTW_WLAN_ACTION_FT_REQ,
+	RTW_WLAN_ACTION_FT_RSP,
+	RTW_WLAN_ACTION_FT_CONF,
+	RTW_WLAN_ACTION_FT_ACK,
+	RTW_WLAN_ACTION_FT_MAX,
+};
+#endif
+
+#ifdef CONFIG_RTW_WNM
+enum rtw_ieee80211_wnm_actioncode {
+	RTW_WLAN_ACTION_WNM_BTM_QUERY = 6,
+	RTW_WLAN_ACTION_WNM_BTM_REQ = 7,
+	RTW_WLAN_ACTION_WNM_BTM_RSP = 8,
+};
+#endif
 
 #define OUI_MICROSOFT 0x0050f2 /* Microsoft (also used in Wi-Fi specs)
 				* 00:50:F2 */

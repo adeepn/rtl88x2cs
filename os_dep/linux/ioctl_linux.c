@@ -9819,26 +9819,32 @@ static int rtw_mp_efuse_set(struct net_device *dev,
 		_rtw_memset(extra, '\0', strlen(extra));
 		sprintf(extra, "write mac addr to fake map OK\n");
 	} else if(strcmp(tmp[0], "update") == 0) {
-		RTW_INFO("To Use new eFuse map ver3\n");
-		if (tmp[1] != 0x00) {
-			pmp_priv->efuse_update_file = _TRUE;
-			strcpy(pmp_priv->efuse_file_path , tmp[1]);
-			RTW_INFO("Got file path %s\n", pmp_priv->efuse_file_path);
-		}
-
+		RTW_INFO("To Use new eFuse map\n");
 		/*step read efuse/eeprom data and get mac_addr*/
-		if (padapter->hal_func.read_adapter_info(padapter)) {
+		rtw_hal_read_chip_info(padapter);
+		/* set mac addr*/
+		rtw_macaddr_cfg(adapter_mac_addr(padapter), get_hal_mac_addr(padapter));
+		_rtw_memcpy(padapter->pnetdev->dev_addr, get_hal_mac_addr(padapter), ETH_ALEN); /* set mac addr to net_device */
+
+#ifdef CONFIG_P2P
+		rtw_init_wifidirect_addrs(padapter, adapter_mac_addr(padapter), adapter_mac_addr(padapter));
+#endif
+#ifdef CONFIG_MI_WITH_MBSSID_CAM
+		rtw_hal_change_macaddr_mbid(padapter, adapter_mac_addr(padapter));
+#else
+		rtw_hal_set_hwreg(padapter, HW_VAR_MAC_ADDR, adapter_mac_addr(padapter)); /* set mac addr to mac register */
+#endif
+		/*pHalFunc->hal_deinit(padapter);*/
+		if (pHalFunc->hal_init(padapter) == _FAIL) {
+			err = -EINVAL;
+			goto exit;
+		}
+		pHalData->current_channel = 0;
+		pHalData->current_channel_bw = CHANNEL_WIDTH_MAX;
+		pHalData->current_band_type = BAND_MAX;
+
 		_rtw_memset(extra, '\0', strlen(extra));
 		sprintf(extra, "eFuse Update OK\n");
-			RTW_INFO("eFuse Update OK\n");
-		} else {
-			_rtw_memset(extra, '\0', strlen(extra));
-			sprintf(extra, "eFuse Update FAIL\n");
-			RTW_INFO("eFuse Update FAIL\n");
-		}
-		pmp_priv->efuse_update_file = _FALSE;
-		RTW_INFO("To Use new eFuse map done ver3\n");
-
 	} else if (strcmp(tmp[0], "analyze") == 0) {
 
 		rtw_efuse_analyze(padapter, EFUSE_WIFI, 0);
@@ -10729,9 +10735,6 @@ static int rtw_tdls_ch_switch(struct net_device *dev,
 
 	rtw_hal_get_hwreg(padapter, HW_VAR_CH_SW_NEED_TO_TAKE_CARE_IQK_INFO, &take_care_iqk);
 	if (take_care_iqk == _TRUE) {
-#ifdef CONFIG_TDLS_CH_SW_V2
-		rtw_tdls_cmd(padapter, ptdls_sta->cmn.mac_addr, TDLS_CH_SW_PREPARE);
-#else
 		u8 central_chnl;
 		u8 bw_mode;
 
@@ -10741,7 +10744,6 @@ static int rtw_tdls_ch_switch(struct net_device *dev,
 			rtw_tdls_cmd(padapter, ptdls_sta->cmn.mac_addr, TDLS_CH_SW_START);
 		else
 			rtw_tdls_cmd(padapter, ptdls_sta->cmn.mac_addr, TDLS_CH_SW_PREPARE);
-#endif
 	} else
 		rtw_tdls_cmd(padapter, ptdls_sta->cmn.mac_addr, TDLS_CH_SW_START);
 

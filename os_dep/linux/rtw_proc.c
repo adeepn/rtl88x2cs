@@ -81,7 +81,7 @@ inline struct proc_dir_entry *rtw_proc_create_dir(const char *name, struct proc_
 }
 
 inline struct proc_dir_entry *rtw_proc_create_entry(const char *name, struct proc_dir_entry *parent,
-	const struct rtw_proc_ops *fops, void * data)
+	const struct proc_ops *fops, void * data)
 {
 	struct proc_dir_entry *entry;
 
@@ -261,38 +261,20 @@ static ssize_t rtw_drv_proc_write(struct file *file, const char __user *buffer, 
 	return -EROFS;
 }
 
-static const struct rtw_proc_ops rtw_drv_proc_seq_fops = {
-#if (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 6, 0))
+static const struct proc_ops rtw_drv_proc_seq_fops = {
 	.proc_open = rtw_drv_proc_open,
 	.proc_read = seq_read,
 	.proc_lseek = seq_lseek,
 	.proc_release = seq_release,
 	.proc_write = rtw_drv_proc_write,
-#else
-	.owner = THIS_MODULE,
-	.open = rtw_drv_proc_open,
-	.read = seq_read,
-	.llseek = seq_lseek,
-	.release = seq_release,
-	.write = rtw_drv_proc_write,
-#endif
 };
 
-static const struct rtw_proc_ops rtw_drv_proc_sseq_fops = {
-#if (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 6, 0))
+static const struct proc_ops rtw_drv_proc_sseq_fops = {
 	.proc_open = rtw_drv_proc_open,
 	.proc_read = seq_read,
 	.proc_lseek = seq_lseek,
 	.proc_release = single_release,
 	.proc_write = rtw_drv_proc_write,
-#else
-	.owner = THIS_MODULE,
-	.open = rtw_drv_proc_open,
-	.read = seq_read,
-	.llseek = seq_lseek,
-	.release = single_release,
-	.write = rtw_drv_proc_write,
-#endif
 };
 
 int rtw_drv_proc_init(void)
@@ -2469,52 +2451,6 @@ static int proc_get_tx_power_limit(struct seq_file *m, void *v)
 }
 #endif /* CONFIG_TXPWR_LIMIT */
 
-static int proc_get_tpc_settings(struct seq_file *m, void *v)
-{
-	struct net_device *dev = m->private;
-	_adapter *adapter = (_adapter *)rtw_netdev_priv(dev);
-
-	dump_txpwr_tpc_settings(m, adapter);
-
-	return 0;
-}
-
-static ssize_t proc_set_tpc_settings(struct file *file, const char __user *buffer, size_t count, loff_t *pos, void *data)
-{
-	struct net_device *dev = data;
-	_adapter *adapter = (_adapter *)rtw_netdev_priv(dev);
-	struct rf_ctl_t *rfctl = adapter_to_rfctl(adapter);
-
-	char tmp[32] = {0};
-	u8 mode;
-	u16 m_constraint;
-
-	if (count > sizeof(tmp)) {
-		rtw_warn_on(1);
-		return -EFAULT;
-	}
-
-	if (buffer && !copy_from_user(tmp, buffer, count)) {
-
-		int num = sscanf(tmp, "%hhu %hu", &mode, &m_constraint);
-
-		if (num < 1)
-			return count;
-
-		if (mode >= TPC_MODE_INVALID)
-			return count;
-
-		if (mode == TPC_MODE_MANUAL && num >= 2)
-			rfctl->tpc_manual_constraint = rtw_min(m_constraint, TPC_MANUAL_CONSTRAINT_MAX);
-		rfctl->tpc_mode = mode;
-
-		if (rtw_get_hw_init_completed(adapter))
-			rtw_run_in_thread_cmd_wait(adapter, ((void *)(rtw_hal_update_txpwr_level)), adapter, 2000);
-	}
-
-	return count;
-}
-
 static int proc_get_tx_power_ext_info(struct seq_file *m, void *v)
 {
 	struct net_device *dev = m->private;
@@ -4530,12 +4466,9 @@ const struct rtw_proc_hdl adapter_proc_hdls[] = {
 	RTW_PROC_HDL_SSEQ("roam_param", proc_get_roam_param, proc_set_roam_param),
 	RTW_PROC_HDL_SSEQ("roam_tgt_addr", NULL, proc_set_roam_tgt_addr),
 #endif /* CONFIG_LAYER2_ROAMING */
-#ifdef CONFIG_RTW_MBO
-	RTW_PROC_HDL_SSEQ("non_pref_ch", rtw_mbo_proc_non_pref_chans_get, rtw_mbo_proc_non_pref_chans_set),
-	RTW_PROC_HDL_SSEQ("cell_data", rtw_mbo_proc_cell_data_get, rtw_mbo_proc_cell_data_set),
-#endif
+
 #ifdef CONFIG_RTW_80211R
-	RTW_PROC_HDL_SSEQ("ft_flags", rtw_ft_proc_flags_get, rtw_ft_proc_flags_set),
+	RTW_PROC_HDL_SSEQ("ft_flags", proc_get_ft_flags, proc_set_ft_flags),
 #endif
 	RTW_PROC_HDL_SSEQ("defs_param", proc_get_defs_param, proc_set_defs_param),
 #ifdef CONFIG_SDIO_HCI
@@ -4722,7 +4655,6 @@ const struct rtw_proc_hdl adapter_proc_hdls[] = {
 #if CONFIG_TXPWR_LIMIT
 	RTW_PROC_HDL_SSEQ("tx_power_limit", proc_get_tx_power_limit, NULL),
 #endif
-	RTW_PROC_HDL_SSEQ("tpc_settings", proc_get_tpc_settings, proc_set_tpc_settings),
 	RTW_PROC_HDL_SSEQ("tx_power_ext_info", proc_get_tx_power_ext_info, proc_set_tx_power_ext_info),
 	RTW_PROC_HDL_SEQ("tx_power_idx", &seq_ops_tx_power_idx, proc_set_tx_power_idx_dump),
 	RTW_PROC_HDL_SEQ("txpwr_total_dbm", &seq_ops_txpwr_total_dbm, proc_set_txpwr_total_dbm_dump),
@@ -4911,38 +4843,20 @@ static ssize_t rtw_adapter_proc_write(struct file *file, const char __user *buff
 	return -EROFS;
 }
 
-static const struct rtw_proc_ops rtw_adapter_proc_seq_fops = {
-#if (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 6, 0))
+static const struct proc_ops rtw_adapter_proc_seq_fops = {
 	.proc_open = rtw_adapter_proc_open,
 	.proc_read = seq_read,
 	.proc_lseek = seq_lseek,
 	.proc_release = seq_release,
 	.proc_write = rtw_adapter_proc_write,
-#else
-	.owner = THIS_MODULE,
-	.open = rtw_adapter_proc_open,
-	.read = seq_read,
-	.llseek = seq_lseek,
-	.release = seq_release,
-	.write = rtw_adapter_proc_write,
-#endif
 };
 
-static const struct rtw_proc_ops rtw_adapter_proc_sseq_fops = {
-#if (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 6, 0))
+static const struct proc_ops rtw_adapter_proc_sseq_fops = {
 	.proc_open = rtw_adapter_proc_open,
 	.proc_read = seq_read,
 	.proc_lseek = seq_lseek,
 	.proc_release = single_release,
 	.proc_write = rtw_adapter_proc_write,
-#else
-	.owner = THIS_MODULE,
-	.open = rtw_adapter_proc_open,
-	.read = seq_read,
-	.llseek = seq_lseek,
-	.release = single_release,
-	.write = rtw_adapter_proc_write,
-#endif
 };
 
 int proc_get_odm_adaptivity(struct seq_file *m, void *v)
@@ -5100,38 +5014,20 @@ static ssize_t rtw_odm_proc_write(struct file *file, const char __user *buffer, 
 	return -EROFS;
 }
 
-static const struct rtw_proc_ops rtw_odm_proc_seq_fops = {
-#if (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 6, 0))
+static const struct proc_ops rtw_odm_proc_seq_fops = {
 	.proc_open = rtw_odm_proc_open,
 	.proc_read = seq_read,
 	.proc_lseek = seq_lseek,
 	.proc_release = seq_release,
 	.proc_write = rtw_odm_proc_write,
-#else
-	.owner = THIS_MODULE,
-	.open = rtw_odm_proc_open,
-	.read = seq_read,
-	.llseek = seq_lseek,
-	.release = seq_release,
-	.write = rtw_odm_proc_write,
-#endif
 };
 
-static const struct rtw_proc_ops rtw_odm_proc_sseq_fops = {
-#if (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 6, 0))
+static const struct proc_ops rtw_odm_proc_sseq_fops = {
 	.proc_open = rtw_odm_proc_open,
 	.proc_read = seq_read,
 	.proc_lseek = seq_lseek,
 	.proc_release = single_release,
 	.proc_write = rtw_odm_proc_write,
-#else
-	.owner = THIS_MODULE,
-	.open = rtw_odm_proc_open,
-	.read = seq_read,
-	.llseek = seq_lseek,
-	.release = single_release,
-	.write = rtw_odm_proc_write,
-#endif
 };
 
 struct proc_dir_entry *rtw_odm_proc_init(struct net_device *dev)
@@ -5265,38 +5161,20 @@ static ssize_t rtw_mcc_proc_write(struct file *file, const char __user *buffer, 
 	return -EROFS;
 }
 
-static const struct rtw_proc_ops rtw_mcc_proc_seq_fops = {
-#if (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 6, 0))
+static const struct proc_ops rtw_mcc_proc_seq_fops = {
 	.proc_open = rtw_mcc_proc_open,
 	.proc_read = seq_read,
 	.proc_lseek = seq_lseek,
 	.proc_release = seq_release,
 	.proc_write = rtw_mcc_proc_write,
-#else
-	.owner = THIS_MODULE,
-	.open = rtw_mcc_proc_open,
-	.read = seq_read,
-	.llseek = seq_lseek,
-	.release = seq_release,
-	.write = rtw_mcc_proc_write,
-#endif
 };
 
-static const struct rtw_proc_ops rtw_mcc_proc_sseq_fops = {
-#if (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 6, 0))
+static const struct proc_ops rtw_mcc_proc_sseq_fops = {
 	.proc_open = rtw_mcc_proc_open,
 	.proc_read = seq_read,
 	.proc_lseek = seq_lseek,
 	.proc_release = single_release,
 	.proc_write = rtw_mcc_proc_write,
-#else
-	.owner = THIS_MODULE,
-	.open = rtw_mcc_proc_open,
-	.read = seq_read,
-	.llseek = seq_lseek,
-	.release = single_release,
-	.write = rtw_mcc_proc_write,
-#endif
 };
 
 struct proc_dir_entry *rtw_mcc_proc_init(struct net_device *dev)

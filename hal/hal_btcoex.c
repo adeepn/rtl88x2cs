@@ -722,34 +722,6 @@ struct btc_wifi_link_info halbtcoutsrc_getwifilinkinfo(PBTC_COEXIST pBtCoexist)
 					wifi_link_info.link_mode = BTC_LINK_25G_MCC_GC_STA;
 			}
 		}
-
-		if (sta_iface && ap_iface) {
-			u8 band_sta = sta_iface->mlmeextpriv.cur_channel > 14 ? BAND_ON_5G : BAND_ON_2_4G;
-			u8 band_ap = ap_iface->mlmeextpriv.cur_channel > 14 ? BAND_ON_5G : BAND_ON_2_4G;
-
-			if (band_sta == band_ap) {
-				switch (band_sta) {
-				case BAND_ON_2_4G:
-					#ifdef CONFIG_MCC_MODE
-					wifi_link_info.link_mode =
-						mcc_en == _TRUE ?  BTC_LINK_2G_MCC_GO_STA : BTC_LINK_2G_SCC_GO_STA;
-					#else /* !CONFIG_MCC_MODE */
-					wifi_link_info.link_mode = BTC_LINK_2G_SCC_GO_STA;
-					#endif /* CONFIG_MCC_MODE */
-					break;
-				case BAND_ON_5G:
-					#ifdef CONFIG_MCC_MODE
-					wifi_link_info.link_mode =
-						mcc_en == _TRUE ?  BTC_LINK_5G_MCC_GO_STA : BTC_LINK_5G_SCC_GO_STA;
-					#else /* !CONFIG_MCC_MODE */
-					wifi_link_info.link_mode = BTC_LINK_5G_SCC_GO_STA;
-					#endif /* CONFIG_MCC_MODE */
-					break;
-				}
-			} else {
-				wifi_link_info.link_mode = BTC_LINK_25G_MCC_GO_STA;
-			}
-		}
 	} else {
 		if (pBtCoexist->board_info.btdm_ant_num == 1)
 			RTW_ERR("%s do not support n_assoc_iface > 2 (ant_num == 1)", __func__);

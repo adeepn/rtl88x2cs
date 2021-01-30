@@ -388,8 +388,6 @@ struct mp_priv {
 	BOOLEAN mplink_btx;
 
 	bool tssitrk_on;
-	bool efuse_update_file;
-	char efuse_file_path[128];
 };
 
 typedef struct _IOCMD_STRUCT_ {

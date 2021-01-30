@@ -677,7 +677,7 @@ void rtw_update_tx_rate_bmp(struct dvobj_priv *dvobj)
 
 		/* TODO: per rfpath and rate section handling? */
 		if (update_ht_rs == _TRUE || update_vht_rs == _TRUE)
-			rtw_hal_update_txpwr_level(adapter);
+			rtw_hal_set_tx_power_level(dvobj_get_primary_adapter(dvobj), hal_data->current_channel);
 	}
 #endif /* CONFIG_TXPWR_LIMIT */
 }
@@ -1076,7 +1076,7 @@ static void update_attrib_phy_info(_adapter *padapter, struct pkt_attrib *pattri
 	pattrib->retry_ctrl = _FALSE;
 }
 
-static s32 update_attrib_sec_info(_adapter *padapter, struct pkt_attrib *pattrib, struct sta_info *psta, enum eap_type eapol_type)
+static s32 update_attrib_sec_info(_adapter *padapter, struct pkt_attrib *pattrib, struct sta_info *psta)
 {
 	sint res = _SUCCESS;
 	struct mlme_priv	*pmlmepriv = &padapter->mlmepriv;
@@ -1087,22 +1087,7 @@ static s32 update_attrib_sec_info(_adapter *padapter, struct pkt_attrib *pattrib
 	_rtw_memset(pattrib->dot11tkiptxmickey.skey,  0, 16);
 	pattrib->mac_id = psta->cmn.mac_id;
 
-	/* Comment by Owen at 2020/05/19
-	 * Issue: RTK STA sends encrypted 4-way 4/4 when AP thinks the 4-way incomplete
-	 * In TCL pressure test, AP may resend 4-way 3/4 with new replay counter in 2 ms.
-	 * In this situation, STA sends unencrypted 4-way 4/4 with old replay counter after more
-	 * than 2 ms, followed by the encrypted 4-way 4/4 with new replay counter. Because the
-	 * AP only accepts unencrypted 4-way 4/4 with a new play counter, and the STA encrypts
-	 * each 4-way 4/4 at this time, the 4-way handshake cannot be completed.
-	 * So we modified that after STA receives unencrypted 4-way 1/4 and 4-way 3/4,
-	 * 4-way 2/4 and 4-way 4/4 sent by STA in the next 100 ms are not encrypted.
-	 */
-	if (psta->ieee8021x_blocked == _TRUE ||
-		((eapol_type == EAPOL_2_4 || eapol_type == EAPOL_4_4) &&
-		rtw_get_passing_time_ms(psta->resp_nonenc_eapol_key_starttime) <= 100)) {
-
-		if (eapol_type == EAPOL_2_4 || eapol_type == EAPOL_4_4)
-			RTW_INFO("Respond unencrypted eapol key\n");
+	if (psta->ieee8021x_blocked == _TRUE) {
 
 		pattrib->encrypt = 0;
 
@@ -1443,7 +1428,7 @@ s32 update_tdls_attrib(_adapter *padapter, struct pkt_attrib *pattrib)
 	}
 
 	/* TODO:_lock */
-	if (update_attrib_sec_info(padapter, pattrib, psta, NON_EAPOL) == _FAIL) {
+	if (update_attrib_sec_info(padapter, pattrib, psta) == _FAIL) {
 		res = _FAIL;
 		goto exit;
 	}
@@ -1514,7 +1499,6 @@ static s32 update_attrib(_adapter *padapter, _pkt *pkt, struct pkt_attrib *pattr
 	struct qos_priv		*pqospriv = &pmlmepriv->qospriv;
 	struct xmit_priv		*pxmitpriv = &padapter->xmitpriv;
 	sint res = _SUCCESS;
-	enum eap_type eapol_type = NON_EAPOL;
 #ifdef CONFIG_LPS
 	u8 pkt_type = 0;
 #endif
@@ -1665,7 +1649,7 @@ get_sta_info:
 		}
 
 	} else if (0x888e == pattrib->ether_type)
-		eapol_type = parsing_eapol_packet(padapter, pktfile.cur_addr, psta, 1);
+		parsing_eapol_packet(padapter, pktfile.cur_addr, psta, 1);
 #if defined (DBG_ARP_DUMP) || defined (DBG_IP_R_MONITOR)
 	else if (pattrib->ether_type == ETH_P_ARP) {
 		u8 arp[28] = {0};
@@ -1700,7 +1684,7 @@ get_sta_info:
 #endif
 
 	/* TODO:_lock */
-	if (update_attrib_sec_info(padapter, pattrib, psta, eapol_type) == _FAIL) {
+	if (update_attrib_sec_info(padapter, pattrib, psta) == _FAIL) {
 		DBG_COUNTER(padapter->tx_logs.core_tx_upd_attrib_err_sec);
 		res = _FAIL;
 		goto exit;
@@ -5790,13 +5774,9 @@ thread_return rtw_xmit_thread(thread_context context)
 	PADAPTER padapter;
 #ifdef RTW_XMIT_THREAD_HIGH_PRIORITY
 #ifdef PLATFORM_LINUX
-#if (LINUX_VERSION_CODE < KERNEL_VERSION(5, 9, 1))
 	struct sched_param param = { .sched_priority = 1 };
 
 	sched_setscheduler(current, SCHED_FIFO, &param);
-#else
-	sched_set_fifo_low(current);
-#endif
 #endif /* PLATFORM_LINUX */
 #endif /* RTW_XMIT_THREAD_HIGH_PRIORITY */
 
